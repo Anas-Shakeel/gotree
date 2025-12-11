@@ -12,6 +12,7 @@ import (
 func main() {
 	// Command line arguments/flags
 	allFiles := flag.Bool("a", false, "show all files")
+	prefixPath := flag.Bool("f", false, "Print the full path prefix for each file")
 
 	// Set custon usage message
 	flag.Usage = func() {
@@ -33,6 +34,7 @@ func main() {
 	// Configurations for tree output
 	config := tree.Config{
 		ShowHiddenFiles: *allFiles,
+		PrefixPath:      *prefixPath,
 	}
 
 	tree.PrintTree(directories, &config)
