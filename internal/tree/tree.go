@@ -26,7 +26,8 @@ func PrintTree(directories []string, config *Config) {
 	}
 }
 
-// traverse recursively traverses and prints directory structure in a tree-like format
+// traverse recursively traverses and prints directory
+// structure in a tree-like format
 func traverse(root, prefix string, config *Config) error {
 	// Read root, get all entries
 	entries, err := os.ReadDir(root)
@@ -38,31 +39,29 @@ func traverse(root, prefix string, config *Config) error {
 	for i, entry := range entries {
 		// Create absolute path to entry
 		absolutePath := filepath.Join(root, entry.Name())
+		isLastEntry := i == len(entries)-1 // ??
 
 		// Show/Skip hidden files
 		if !config.ShowHiddenFiles && strings.HasPrefix(entry.Name(), ".") {
 			continue
 		}
 
-		// Check if last entry
-		if i == len(entries)-1 {
+		newPrefix := prefix
+
+		// Print entry
+		if isLastEntry {
 			fmt.Printf("%s└── %s\n", prefix, entry.Name())
-
-			if entry.IsDir() { // Directory?
-				err = traverse(absolutePath, prefix+"    ", config)
-				if err != nil {
-					return err
-				}
-			}
-
+			newPrefix += "    "
 		} else {
 			fmt.Printf("%s├── %s\n", prefix, entry.Name())
+			newPrefix += "│   "
+		}
 
-			if entry.IsDir() { // Directory?
-				err = traverse(absolutePath, prefix+"│    ", config)
-				if err != nil {
-					return err
-				}
+		// Entry a Directory?
+		if entry.IsDir() {
+			err = traverse(absolutePath, newPrefix, config)
+			if err != nil {
+				return err
 			}
 		}
 	}
