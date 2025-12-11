@@ -12,6 +12,7 @@ import (
 type Config struct {
 	ShowHiddenFiles bool // Show hidden files as well?
 	PrefixPath      bool // Prefix path for each file?
+	DirsOnly        bool // Show directories only?
 }
 
 // PrintTree calls the internal traversing code (function)
@@ -36,18 +37,29 @@ func traverse(root, prefix string, config *Config) error {
 		return errors.New("error opening directory")
 	}
 
+	// Filter out entries
+	filtered := make([]os.DirEntry, 0, len(entries))
+	for _, entry := range entries {
+		// Show hidden files?
+		if !config.ShowHiddenFiles && strings.HasPrefix(entry.Name(), ".") {
+			continue // No!
+		}
+
+		// Show directories only?
+		if config.DirsOnly && !entry.IsDir() {
+			continue // No!
+		}
+
+		filtered = append(filtered, entry)
+	}
+
 	// Iterate entries and print recursively
-	for i, entry := range entries {
+	for i, entry := range filtered {
 		// Create absolute path to entry
 		entryName := entry.Name()
 		absolutePath := filepath.Join(root, entryName)
-		isLastEntry := i == len(entries)-1
+		isLastEntry := i == len(filtered)-1
 		isDir := entry.IsDir()
-
-		// Show/Skip hidden files
-		if !config.ShowHiddenFiles && strings.HasPrefix(entryName, ".") {
-			continue
-		}
 
 		// Prefix path for each file?
 		if config.PrefixPath {
