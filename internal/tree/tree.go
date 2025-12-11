@@ -1,12 +1,11 @@
 package tree
 
 import (
+	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
-
-	"github.com/anas-shakeel/gotree/internal/utils"
+	"strings"
 )
 
 // Config struct for options
@@ -20,16 +19,19 @@ type Config struct {
 func PrintTree(directories []string, config *Config) {
 	for _, dir := range directories {
 		fmt.Println(dir)
-		traverse(dir, "")
+		err := traverse(dir, "", config)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 }
 
 // traverse recursively traverses and prints directory structure in a tree-like format
-func traverse(root, prefix string) {
+func traverse(root, prefix string, config *Config) error {
 	// Read root, get all entries
 	entries, err := os.ReadDir(root)
 	if err != nil {
-		log.Fatal(err)
+		return errors.New("error opening directory")
 	}
 
 	// Iterate entries and print recursively
@@ -37,7 +39,8 @@ func traverse(root, prefix string) {
 		// Create absolute path to entry
 		absolutePath := filepath.Join(root, entry.Name())
 
-		if utils.ShouldSkip(entry.Name()) {
+		// Show/Skip hidden files
+		if !config.ShowHiddenFiles && strings.HasPrefix(entry.Name(), ".") {
 			continue
 		}
 
@@ -46,16 +49,23 @@ func traverse(root, prefix string) {
 			fmt.Printf("%s└── %s\n", prefix, entry.Name())
 
 			if entry.IsDir() { // Directory?
-				traverse(absolutePath, prefix+"    ")
+				err = traverse(absolutePath, prefix+"    ", config)
+				if err != nil {
+					return err
+				}
 			}
 
 		} else {
 			fmt.Printf("%s├── %s\n", prefix, entry.Name())
 
 			if entry.IsDir() { // Directory?
-				traverse(absolutePath, prefix+"│    ")
+				err = traverse(absolutePath, prefix+"│    ", config)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
 
+	return nil
 }

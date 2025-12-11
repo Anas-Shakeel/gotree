@@ -11,7 +11,7 @@ import (
 
 func main() {
 	// Command line arguments/flags
-	// TODO: ...
+	allFiles := flag.Bool("a", false, "show all files")
 
 	// Set custon usage message
 	flag.Usage = func() {
@@ -31,7 +31,9 @@ func main() {
 	}
 
 	// Configurations for tree output
-	config := tree.Config{}
+	config := tree.Config{
+		ShowHiddenFiles: *allFiles,
+	}
 
 	tree.PrintTree(directories, &config)
 }
