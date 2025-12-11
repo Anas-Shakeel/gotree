@@ -46,19 +46,22 @@ func traverse(root, prefix string, config *Config) error {
 			continue
 		}
 
-		newPrefix := prefix
-
 		// Print entry
 		if isLastEntry {
 			fmt.Printf("%s└── %s\n", prefix, entry.Name())
-			newPrefix += "    "
 		} else {
 			fmt.Printf("%s├── %s\n", prefix, entry.Name())
-			newPrefix += "│   "
 		}
 
 		// Entry a Directory?
 		if entry.IsDir() {
+			newPrefix := prefix
+			if isLastEntry {
+				newPrefix += "    "
+			} else {
+				newPrefix += "│   "
+			}
+
 			err = traverse(absolutePath, newPrefix, config)
 			if err != nil {
 				return err
