@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/anas-shakeel/gotree/internal/config"
+	"github.com/anas-shakeel/gotree/internal/counter"
 	"github.com/anas-shakeel/gotree/internal/utils"
 )
 
@@ -14,18 +15,30 @@ import (
 //
 // Acting as a middleman between cli and traversing logic.
 func PrintTree(directories []string, config *config.Config) {
+	var count counter.Counter
+
 	for _, dir := range directories {
 		fmt.Println(dir)
-		err := traverse(dir, "", config)
+		err := traverse(dir, "", config, &count)
 		if err != nil {
 			fmt.Println(err)
+			continue
 		}
+		// Increment for root dir (only for successful ones)
+		count.Dirs++
+	}
+
+	// Print count
+	if config.DirsOnly {
+		fmt.Printf("\n%d directories\n", count.Dirs)
+	} else {
+		fmt.Printf("\n%d directories, %d files\n", count.Dirs, count.Files)
 	}
 }
 
 // traverse recursively traverses and prints directory
 // structure in a tree-like format
-func traverse(root, prefix string, config *config.Config) error {
+func traverse(root, prefix string, config *config.Config, count *counter.Counter) error {
 	// Read root, get all entries
 	entries, err := os.ReadDir(root)
 	if err != nil {
@@ -55,8 +68,14 @@ func traverse(root, prefix string, config *config.Config) error {
 			fmt.Printf("%s├── %s\n", prefix, entryName)
 		}
 
+		// Count files
+		if !isDir {
+			count.Files++
+		}
+
 		// Entry a Directory?
 		if isDir {
+			count.Dirs++ // Count dirs
 			newPrefix := prefix
 			if isLastEntry {
 				newPrefix += "    "
@@ -64,7 +83,7 @@ func traverse(root, prefix string, config *config.Config) error {
 				newPrefix += "│   "
 			}
 
-			err = traverse(absolutePath, newPrefix, config)
+			err = traverse(absolutePath, newPrefix, config, count)
 			if err != nil {
 				return err
 			}
