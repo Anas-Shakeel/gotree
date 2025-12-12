@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 
+	"github.com/anas-shakeel/gotree/internal/config"
 	"github.com/anas-shakeel/gotree/internal/tree"
 )
 
@@ -33,7 +34,7 @@ func main() {
 	}
 
 	// Configurations for tree output
-	config := tree.Config{
+	config := config.Config{
 		ShowHiddenFiles: *allFiles,
 		PrefixPath:      *prefixPath,
 		DirsOnly:        *dirsOnly,

@@ -5,20 +5,15 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
-)
 
-// Config struct for options
-type Config struct {
-	ShowHiddenFiles bool // Show hidden files as well?
-	PrefixPath      bool // Prefix path for each file?
-	DirsOnly        bool // Show directories only?
-}
+	"github.com/anas-shakeel/gotree/internal/config"
+	"github.com/anas-shakeel/gotree/internal/utils"
+)
 
 // PrintTree calls the internal traversing code (function)
 //
 // Acting as a middleman between cli and traversing logic.
-func PrintTree(directories []string, config *Config) {
+func PrintTree(directories []string, config *config.Config) {
 	for _, dir := range directories {
 		fmt.Println(dir)
 		err := traverse(dir, "", config)
@@ -30,7 +25,7 @@ func PrintTree(directories []string, config *Config) {
 
 // traverse recursively traverses and prints directory
 // structure in a tree-like format
-func traverse(root, prefix string, config *Config) error {
+func traverse(root, prefix string, config *config.Config) error {
 	// Read root, get all entries
 	entries, err := os.ReadDir(root)
 	if err != nil {
@@ -38,27 +33,14 @@ func traverse(root, prefix string, config *Config) error {
 	}
 
 	// Filter out entries
-	filtered := make([]os.DirEntry, 0, len(entries))
-	for _, entry := range entries {
-		// Show hidden files?
-		if !config.ShowHiddenFiles && strings.HasPrefix(entry.Name(), ".") {
-			continue // No!
-		}
-
-		// Show directories only?
-		if config.DirsOnly && !entry.IsDir() {
-			continue // No!
-		}
-
-		filtered = append(filtered, entry)
-	}
+	filtered := utils.FilterEntries(&entries, config)
 
 	// Iterate entries and print recursively
-	for i, entry := range filtered {
+	for i, entry := range *filtered {
 		// Create absolute path to entry
 		entryName := entry.Name()
 		absolutePath := filepath.Join(root, entryName)
-		isLastEntry := i == len(filtered)-1
+		isLastEntry := i == len(*filtered)-1
 		isDir := entry.IsDir()
 
 		// Prefix path for each file?
