@@ -44,7 +44,7 @@ jobs:
             - name: Upload artifacts
               uses: actions/upload-artifact@v4
               with:
-                  name: binaries
+                  name: binaries-${{ matrix.goos }}-${{ matrix.goarch }}
                   path: |
                       dist/*.exe
                       dist/*.tar.gz
@@ -61,7 +61,7 @@ jobs:
             - name: Download artifacts
               uses: actions/download-artifact@v4
               with:
-                  name: binaries
+                  name: binaries-*
                   path: dist/
 
             - name: Generate release notes
