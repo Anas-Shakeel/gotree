@@ -1,0 +1,91 @@
+name: Build & Draft Release
+
+on:
+    push:
+        tags:
+            - "v*" # triggers on tags like v1.0.0
+
+jobs:
+    build:
+        name: Build Binaries
+        runs-on: ubuntu-latest
+
+        strategy:
+            matrix:
+                goos: [linux, windows, darwin]
+                goarch: [amd64, arm64]
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version: "1.25.1"
+
+            - name: Build binary
+              run: |
+                  mkdir -p dist
+                  output="dist/${{ matrix.goos }}_${{ matrix.goarch }}"
+                  if [ "${{ matrix.goos }}" = "windows" ]; then
+                    output="${output}.exe"
+                  fi
+                  GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -ldflags="-s -w" -o "$output" ./cmd/gotree
+
+            - name: Archive Linux and macOS binaries
+              if: matrix.goos != 'windows'
+              run: |
+                  cd dist
+                  bin="${{ matrix.goos }}_${{ matrix.goarch }}"
+                  tar -czf "${bin}.tar.gz" "$bin"
+                  cd ..
+
+            - name: Upload artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: binaries
+                  path: |
+                      dist/*.exe
+                      dist/*.tar.gz
+
+    release:
+        name: Draft GitHub Release
+        needs: build
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Download artifacts
+              uses: actions/download-artifact@v4
+              with:
+                  name: binaries
+                  path: dist/
+
+            - name: Generate release notes
+              id: changelog
+              run: |
+                  # Get last tag
+                  LAST_TAG=$(git describe --tags --abbrev=0 HEAD^)
+                  # Generate simple commit list
+                  NOTES=$(git log $LAST_TAG..HEAD --pretty=format:"- %s")
+                  echo "notes<<EOF" >> $GITHUB_ENV
+                  echo "$NOTES" >> $GITHUB_ENV
+                  echo "EOF" >> $GITHUB_ENV
+                  # Set title same as current tag
+                  TAG_NAME=$(echo $GITHUB_REF | sed 's/refs\/tags\///')
+                  echo "title=$TAG_NAME" >> $GITHUB_ENV
+
+            - name: Create Draft Release
+              uses: softprops/action-gh-release@v2
+              with:
+                  files: |
+                      dist/*.exe
+                      dist/*.tar.gz
+                  draft: true
+                  name: ${{ env.title }}
+                  body: ${{ env.notes }}
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
