@@ -9,7 +9,7 @@ A small Go program that replicates the classic `tree` command. It scans a direct
 If you have **Go** installed:
 
 ```sh
-go get -u github.com/anas-shakeel/gotree@latest
+go install github.com/anas-shakeel/gotree/cmd/gotree@latest
 ```
 
 ### Download Precompiled Binaries
