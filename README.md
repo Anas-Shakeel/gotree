@@ -1,4 +1,4 @@
-# Tree
+# Gotree
 
 A small Go program that replicates the classic `tree` command. It scans a directory and prints a clean hierarchical view of its files and folders.
 
