@@ -25,7 +25,7 @@ If you have **Go** installed, you can build the project by running:
 ```sh
 git clone https://github.com/anas-shakeel/gotree.git
 cd gotree
-go build
+go build ./cmd/gotree/
 ```
 
 ## Usage
